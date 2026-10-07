@@ -113,18 +113,18 @@ Overtime is found by matching each timesheet row to the roster on employee and d
   <img src="screenshots/payroll_remediation.png" width="850" alt="Payroll Remediation page">
 </p>
 
-- **$35.1K is owed to 14 of 100 employees.** All 14 are still active. One employee accounts for $10.6K (30%), and the top four for 67%.
-- **Casual staff carry 93% of it.** $32.7K of the underpayment sits with casual employees, against $2.1K for part-time and $347 for full-time.
-- **Weekly pay runs carry 73%.** $25.7K arose in weekly pay periods and $9.5K in monthly ones. Fortnightly periods show none.
-- **Two job titles make up 59%.** IT Support Specialist ($10.7K) and Administrative Assistant ($10.1K) lead, followed by Software Developer ($6.7K), Nurse ($4.9K) and Cleaner ($2.7K). Security Guards show none.
-- **Junior rates matter, but only at the margin.** Two full-time employees under 21 were paid below their age-adjusted minimum, for $320 in total.
-- **$4.88M was paid above the minimum**, of which bonuses contribute $920K and allowances $26K.
+- **\$35.1K is owed to 14 of 100 employees.** All 14 are still active. One employee accounts for \$10.6K (30%), and the top four for 67%.
+- **Casual staff carry 93% of it.** \$32.7K of the underpayment sits with casual employees, against \$2.1K for part-time and \$347 for full-time.
+- **Weekly pay runs carry 73%.** \$25.7K arose in weekly pay periods and \$9.5K in monthly ones. Fortnightly periods show none.
+- **Two job titles make up 59%.** IT Support Specialist (\$10.7K) and Administrative Assistant (\$10.1K) lead, followed by Software Developer (\$6.7K), Nurse (\$4.9K) and Cleaner (\$2.7K). Security Guards show none.
+- **Junior rates matter, but only at the margin.** Two full-time employees under 21 were paid below their age-adjusted minimum, for \$320 in total.
+- **\$4.88M was paid above the minimum**, of which bonuses contribute \$920K and allowances \$26K.
 
 | Group | Underpayment | Paid above minimum |
 |---|---:|---:|
-| Casual | $32,669 | $1.56M |
-| Part-time | $2,108 | $1.34M |
-| Full-time | $347 | $1.99M |
+| Casual | \$32,669 | \$1.56M |
+| Part-time | \$2,108 | \$1.34M |
+| Full-time | \$347 | \$1.99M |
 
 ### Employee Analysis
 
@@ -136,11 +136,11 @@ This page drills into one employee at a time: leave record, bonus and allowance 
 
 - **Casual staff work almost half of all overtime and no undertime.** They logged 14,180 of 29,853 overtime hours (47%) and zero hours under roster. Full-time and part-time staff account for all 2,256 undertime hours.
 - **Leave totals 2,012 hours:** 1,102 annual, 570 sick and carer's, 340 unpaid.
-- **Allowances reach two roles only.** Nurses received $24.8K and Cleaners $1.7K; the other four job titles received none.
+- **Allowances reach two roles only.** Nurses received \$24.8K and Cleaners \$1.7K; the other four job titles received none.
 
 ### Recommendations
 
-1. **Repay the 14 affected employees.** The liability is small ($35.1K) and everyone owed is still employed, so it can be settled in a normal pay run.
+1. **Repay the 14 affected employees.** The liability is small (\$35.1K) and everyone owed is still employed, so it can be settled in a normal pay run.
 2. **Review casual pay rates against the minimum wage at every increase.** Casual underpayment is the pattern to fix: the contract rate has to stay above the minimum rate with the 25% casual loading applied.
 3. **Add a floor check to the weekly pay run.** Comparing Paid with Mandatory before pay is released would have caught 73% of the shortfall at the time it happened.
 4. **Look at how casual overtime is rostered.** Casual staff working 47% of overtime with no undertime suggests rosters are set below the hours actually needed.
@@ -153,5 +153,5 @@ Problems found while building the pipeline, and how each was handled:
 |---|---|---|
 | Loading the marts into Power BI failed with *"Cannot convert a char value to money"* | `employee_id` was imported as `money` in seven landing tables (`1.00`, `2.00`…) but as text in `lnd_bonus` (`E0000001`), so the join in `fact_bonuses` forced an invalid conversion | Strip the `E` prefix and `TRY_CAST` to the same type before joining; all 848 bonus rows now match an employee and a contract |
 | Pay periods appeared in alphabetical order on chart axes | `pay_period_label` is text | Set *Sort by column* to `period_start_date` |
-| Junior employees' minimum entitlement was understated 100-fold | `dim_junior_pay_rates` already stores the multiplier as a fraction (0.368), and the `Mandatory Amount` measure divided it by 100 again | Removed the second division; two under-21 employees with underpayments surfaced and the total moved from $34.8K to $35.1K |
+| Junior employees' minimum entitlement was understated 100-fold | `dim_junior_pay_rates` already stores the multiplier as a fraction (0.368), and the `Mandatory Amount` measure divided it by 100 again | Removed the second division; two under-21 employees with underpayments surfaced and the total moved from \$34.8K to \$35.1K |
 | A cyclic reference blocked all queries from loading | A duplicated query (`dim_pay_period (2)`) referenced its original | Removed the duplicate and reloaded each table once |
