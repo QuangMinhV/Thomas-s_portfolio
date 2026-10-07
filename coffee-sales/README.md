@@ -1,113 +1,152 @@
-# Coffee Sales Analysis — Power BI Dashboard
+# Coffee Sales Analysis
 
-An interactive Power BI report analysing six months of transaction data (January – June 2023) from a coffee shop chain with three locations in New York: **Astoria**, **Hell’s Kitchen** and **Lower Manhattan**.
+A Power BI report on six months of transactions (January to June 2023) from a coffee shop chain with three New York stores: Astoria, Hell's Kitchen and Lower Manhattan. One flat Excel export is reshaped into a star schema in Power Query and analysed with DAX to show how sales trend, when customers buy and which products carry revenue.
 
-> **Tools:** Power BI Desktop · Power Query · DAX · Star-schema data modelling
->
-> **Data:** ~149K transaction rows (date, time, store, product, quantity, unit price) — *Coffee Shop Sales dataset (Maven Analytics)*
+<p align="center">
+  <img src="screenshots/Monthly_Overview.png" width="850" alt="Monthly Overview page">
+</p>
 
-## 1. Problem Statement
+## Table of Contents
 
-The business sells coffee, tea, bakery items, drinking chocolate and retail products across three stores, but has no single view of performance. Managers need to answer:
+- [Problem Statement](#problem-statement)
+- [Data Source](#data-source)
+- [Architecture](#architecture)
+- [Semantic Model](#semantic-model)
+  - [Relationships](#relationships)
+  - [Measures](#measures)
+- [Business Insights](#business-insights)
+  - [Monthly Overview](#monthly-overview)
+  - [Sales Correlation and Forecast](#sales-correlation-and-forecast)
+  - [Product Drillthrough](#product-drillthrough)
+  - [Recommendations](#recommendations)
 
-1.  **How are sales trending?** Are revenue, orders and quantity growing month over month?
-2.  **When do customers buy?** Which days of the week and hours of the day drive the most revenue, so staffing and stock can be planned?
-3.  **What do they buy?** Which categories, product types and individual products lead or lag?
-4.  **Where do they buy?** How do the three stores compare?
-5.  **What drives revenue?** Is there a relationship between unit price and sales, and can it be used to estimate sales at a given price point?
+## Problem Statement
 
-**Goal:** build a self-service dashboard that answers these questions and supports decisions on staffing, menu, pricing and promotions.
+The project answers four questions for the store managers:
 
-## 2. Process
+1. **How are sales trending?** Whether revenue, orders and quantity grow month over month.
+2. **When do customers buy?** Which hours and days bring in the most revenue, so staffing and stock can be planned.
+3. **What do they buy?** Which categories, product types and individual products lead or lag.
+4. **Where do they buy?** How the three stores compare.
 
-### 2.1 Data preparation (Power Query)
+The report also fits a straight line between unit price and sales, so a manager can pick a price and read an estimated sales value per transaction.
 
-- Imported the raw transaction table and checked data types (date, time, currency, whole numbers).
-- Removed duplicates and checked for nulls in key columns.
-- Split the flat file into dimension tables and created surrogate keys (`product_id`, `type_id`, `category_id`, `store_id`).
-- Added a `Sales` column (`transaction_qty × unit_price`).
+## Data Source
 
-### 2.2 Data model (star schema)
+The data is the Coffee Shop Sales dataset from Maven Analytics: one Excel table with **149,116 transaction rows** from **1 January to 30 June 2023**.
 
-                     Dim_Date ─┐
-                     Dim_Time ─┤
-                    Dim_Store ─┼──► Fact_Transaction
-    Dim_category ─► Dim_Type ─► Dim_Product ─┘
+| Column | What it holds |
+|---|---|
+| `transaction_id` | One id per transaction line |
+| `transaction_date`, `transaction_time` | When the sale happened |
+| `transaction_qty` | Units sold |
+| `store_id`, `store_location` | Which of the three stores |
+| `product_id`, `unit_price` | Product sold and its price |
+| `product_category`, `product_type`, `product_detail` | Three-level product description |
 
-| Table                                       | Purpose                                                                                                              |
-|---------------------------------------------|----------------------------------------------------------------------------------------------------------------------|
-| `Fact_Transaction`                          | One row per transaction line: product, store, date, time, qty, unit price, sales                                     |
-| `Dim_Date`                                  | Calendar table: year, quarter, month, week number, weekday, weekend flag                                             |
-| `Dim_Time`                                  | Hour of day for intraday analysis                                                                                    |
-| `Dim_Store`                                 | Store location                                                                                                       |
-| `Dim_Product` → `Dim_Type` → `Dim_category` | Product hierarchy (snowflaked)                                                                                       |
-| Parameter tables                            | `Predicted Unit Price`, `Ranking Option`, `Category/Type Ranking Option`, `Breakdown` (field parameter), `TopBottom` |
+## Architecture
 
-### 2.3 DAX measures
+All preparation happens inside Power BI. Each layer has one job.
 
-Measures are organised in a dedicated `Measure Table` (folders: Sales, Orders, Quantity, Linear Regression, Other).
+| Layer | Tool | Purpose |
+|---|---|---|
+| 1 | CSV file | Flat source table, one row per transaction line |
+| 2 | Power Query | Set data types, split the flat table into fact and dimension tables, remove duplicates, add surrogate keys (`category_id`, `type_id`) |
+| 3 | Data model | Star schema with a snowflaked product hierarchy, a calendar table and a time table built in DAX |
+| 4 | Report | Three report pages and two tooltip pages |
 
-- **Core KPIs:** `Total Sales`, `Total Orders`, `Total Quantity Sold`
-- **Time intelligence:** current month (CM), previous month (PM), MoM growth % and difference for sales, orders and quantity
-- **Ranking:** `Product Ranking` and `Category & Type Ranking` use `RANKX` over `ALLSELECTED` and respond to the **Top/Bottom** and **Top N** slicers
-- **Linear regression:** slope and intercept computed in DAX with the least-squares formulas (`SUMX` for Σxy and Σx²). The report shows the fitted equation and a **what-if prediction** of sales for a user-selected unit price.
-- **Context helpers:** `Selected Product Type` uses `CROSSFILTER(..., BOTH)` so the drill-through page shows the correct product type without changing model relationships.
+## Semantic Model
 
-### 2.4 Report design
+The model has one fact table, six dimensions and a `Measure Table` that holds all DAX measures.
 
-| Page                             | What it shows                                                                                                                                                             |
-|----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Monthly Overview**             | KPI cards with sparklines and MoM change, calendar heatmap, weekday vs weekend split, sales by store, day × hour heatmap, category/type Top-N ranking (field parameter)   |
-| **Sales Correlation & Forecast** | Price vs sales scatter with trend line, regression formula, what-if price → predicted sales, decomposition tree (category → type → product), product Top/Bottom-N ranking |
-| **Product Drillthrough**         | Product and type cards, sales/orders/quantity trend by month for the selected product                                                                                     |
-| **Tooltip pages**                | Calendar and day-hour tooltips with details on hover                                                                                                                      |
+| Table | Rows | What it holds |
+|---|---:|---|
+| `Fact_Transaction` | 149,116 | Date, time, store, product, quantity, unit price, and a `Sales` column (`transaction_qty × unit_price`) |
+| `Dim_Date` | 181 | Calendar built with `CALENDAR` over the transaction dates: year-month, week number, weekday, weekend flag |
+| `Dim_Time` | 86,400 | One row per second of the day, with hour and minute |
+| `Dim_Store` | 3 | Store location |
+| `Dim_Product` | 80 | Product name |
+| `Dim_Type` | 29 | Product type |
+| `Dim_category` | 9 | Product category |
 
-**Interactivity:** date-range and store slicers, Top/Bottom and Top-N slicers, field parameters, drill-through button with hover/press states, and a reset button built with bookmarks.
+Six small helper tables drive the slicers: `Breakdown` and `Metrics` (field parameters), `TopBottom`, `Ranking Option`, `Category/Type Ranking Option` and `Predicted Unit Price`.
 
-## 3. Key Insights
+### Relationships
 
-*Month-level examples use February 2023.*
+All relationships are many-to-one with single-direction filtering.
 
-**Trend**
+| From | To |
+|---|---|
+| `Fact_Transaction[store_id]` | `Dim_Store[store_id]` |
+| `Fact_Transaction[product_id]` | `Dim_Product[product_id]` |
+| `Dim_Product[type_id]` | `Dim_Type[type_id]` |
+| `Dim_Type[category_id]` | `Dim_category[category_id]` |
+| `Fact_Transaction[transaction_date]` | `Dim_Date[Date]` |
+| `Fact_Transaction[transaction_time]` | `Dim_Time[Time]` |
 
-- Total revenue for Jan–Jun 2023 is **\$698.8K**, with a clear **upward trend from March to June**. May and June are the strongest months.
-- February dipped: sales **\$76.2K (-6.8% MoM)**, orders **16K (-5.5%)**, quantity **24K (-5.3%)**. This is consistent with fewer trading days in February.
+### Measures
 
-**Timing**
+| Measure | Logic |
+|---|---|
+| `Total Sales` | `SUMX` of `transaction_qty × unit_price` over the fact table |
+| `Total Orders` | Count of `transaction_id` |
+| `Total Quantity Sold` | Sum of `transaction_qty` |
+| `CM Sales`, `PM Sales` (and the same for orders and quantity) | Current month with `DATESMTD`; previous month by shifting it with `DATEADD(-1, MONTH)` |
+| `MoM Growth & Sales Diff` | Text label with an arrow, the percentage change and the difference in thousands against the previous month |
+| `Sales Target` | Previous month sales × 1.05 |
+| `Category & Type Ranking` | `RANKX` over all categories or types; returns sales only for the Top or Bottom N chosen in the slicers |
+| `Product Ranking` | Dense `RANKX` over the selected products; Top or Bottom N, default 5 |
+| `Linear Regression Formula` | Slope and intercept from the least-squares formulas, written with `SUMX` for Σxy and Σx² |
+| `Linear Regression Prediction` | Slope × the unit price picked in the slicer + intercept |
+| `Selected Product Type` | Uses `CROSSFILTER(..., BOTH)` so the drill-through page shows the product's type without changing the model |
 
-- The **morning peak (7 – 10 AM)** is the busiest period. In February, 8 AM, 9 AM and 10 AM each brought in about **\$8.9K – \$9.7K**, roughly double any afternoon hour (about \$4.2K – \$4.8K).
-- **Weekdays generate ~71% of sales** and weekends ~29%, which points to a commuter/office customer base.
+## Business Insights
 
-**Stores**
+### Monthly Overview
 
-- The three stores perform **almost identically**: Hell’s Kitchen \$25.7K, Lower Manhattan \$25.3K and Astoria \$25.1K in February. No single store is under-performing.
+<p align="center">
+  <img src="screenshots/Monthly_Overview.png" width="850" alt="Monthly Overview page">
+</p>
 
-**Products**
+- **Revenue is \$698.8K and has doubled since January.** Monthly sales went from \$81.7K in January to \$166.5K in June. February was the only month that fell (−6.8%), and it has the fewest trading days.
+- **Growth is slowing.** Sales grew 30% in March, 20% in April and 32% in May, then 6% in June.
+- **Three morning hours bring in 37% of revenue.** 8, 9 and 10 AM earn \$83K to \$89K each, about twice any afternoon hour (\$40K to \$42K). Sales after 8 PM are close to zero.
+- **Every day of the week sells about the same.** Monday is highest (\$101.7K) and Saturday lowest (\$96.9K), a gap of 5%. Weekdays hold 72% of sales, which is what five days out of seven would give.
+- **The three stores are level.** Hell's Kitchen \$236.5K, Astoria \$232.2K, Lower Manhattan \$230.1K; the gap from first to last is under 3%.
+- **Coffee and tea make up two thirds of sales.** Coffee \$270.0K (39%) and Tea \$196.4K (28%), then Bakery \$82.3K and Drinking Chocolate \$72.4K.
 
-- **Coffee** is the largest category, followed by **Tea** (\$196.4K over six months). **Bakery** (\$82.3K) and **Drinking Chocolate** (\$72.4K) are smaller but steady.
-- Top product types: **Barista Espresso**, **Brewed Chai Tea**, **Hot Chocolate** and **Gourmet Brewed Coffee**.
-- Best-selling products over the period: **Sustainably Grown Organic (Lg) \$21.2K**, **Dark Chocolate (Lg) \$21.0K**, **Latte (Rg) \$19.1K**, **Cappuccino (Lg) \$17.6K**, **Morning Sunrise Chai (Lg) \$17.4K**.
-- **Large sizes dominate the top-10 list**, so customers are willing to trade up.
-- The bottom of the ranking is almost entirely **packaged tea/coffee for retail** (e.g. Serenity Green Tea, English Breakfast, Peppermint, Lemon Grass). Each earns only about **\$1.3K – \$1.5K** over six months.
+| Month | Sales | Orders | Quantity |
+|---|---:|---:|---:|
+| January | \$81.7K | 17,314 | 24,870 |
+| February | \$76.1K | 16,359 | 23,550 |
+| March | \$98.8K | 21,229 | 30,406 |
+| April | \$118.9K | 25,335 | 36,469 |
+| May | \$156.7K | 33,527 | 48,233 |
+| June | \$166.5K | 35,352 | 50,942 |
 
-**Price vs sales**
+### Sales Correlation and Forecast
 
-- Unit price and sales show a strong positive linear relationship (**y = 1.09x + 1.00**). Higher-priced items contribute proportionally more revenue per transaction rather than suppressing demand.
+<p align="center">
+  <img src="screenshots/Sales_Correlation_and_Forecast.png" width="850" alt="Sales Correlation and Forecast page">
+</p>
 
-## 4. Recommendations
+- **Four product types lead:** Barista Espresso \$91.4K, Brewed Chai Tea \$77.1K, Hot Chocolate \$72.4K and Gourmet Brewed Coffee \$70.0K.
+- **Large sizes top the product ranking.** Four of the five best sellers are large: Sustainably Grown Organic Lg \$21.2K, Dark Chocolate Lg \$21.0K, Latte Rg \$19.1K, Cappuccino Lg \$17.6K, Morning Sunrise Chai Lg \$17.4K.
+- **The weakest products earn under \$1.4K each in six months:** packaged Dark Chocolate (\$0.8K), Earl Grey, Spicy Eye Opener Chai, Guatemalan Sustainably Grown, Lemon Grass and Peppermint.
+- **Sales per transaction rise in step with price.** The fitted line is y = 1.09x + 1.00: each extra dollar of unit price adds about \$1.09 to a transaction line.
 
-| #   | Recommendation                                                                                                                                                          | Based on                           |
-|-----|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------|
-| 1   | **Staff and stock for the 7–10 AM rush.** Add baristas and pre-prepare bakery items before 7 AM, and reduce staffing mid-afternoon.                                     | Hourly heatmap                     |
-| 2   | **Grow weekend traffic** with weekend-only bundles (coffee + pastry), brunch items or loyalty double-points.                                                            | 71% / 29% weekday–weekend split    |
-| 3   | **Encourage upsizing.** Make Large the default suggestion at the till and price the Rg → Lg step attractively. Large drinks already top the ranking.                    | Top-N product ranking              |
-| 4   | **Cross-sell bakery with morning coffee** (e.g. a “morning combo”), since bakery is under-represented relative to coffee traffic.                                       | Category split + peak hours        |
-| 5   | **Review the retail range.** Shrink or rotate the lowest-selling packaged teas/coffees, or move them to a promoted display near the counter.                            | Bottom-N product ranking           |
-| 6   | **Protect the lead products.** Keep the top 5 (Organic brewed coffee, Dark Chocolate, Latte, Cappuccino, Chai) always in stock, and use them as anchors for promotions. | Top-N ranking + drillthrough trend |
-| 7   | **Test premium pricing carefully.** The price–sales relationship suggests room for premium lines. Validate with an A/B test in one store before rolling out.            | Regression / what-if analysis      |
-| 8   | **Replicate best practices across stores.** Performance is balanced, so standardise what works (menu, promotions) across all three rather than fixing a weak store.     | Store comparison                   |
+### Product Drillthrough
 
-## 5. Limitations
+<p align="center">
+  <img src="screenshots/Product_Drillthrough.png" width="850" alt="Product Drillthrough page">
+</p>
 
-- Only **six months** of data, so seasonality (e.g. holiday season) is not visible.
-- The data has **no cost or margin** information, so recommendations focus on revenue rather than profit.
+This page opens from a product on the ranking chart. It shows that product's type, its sales, orders and quantity, the monthly trend for the metric chosen in the slicer, its individual transactions, and a gauge of the current month against a target of 5% above the previous month.
+
+### Recommendations
+
+1. **Staff and stock for 7 to 10 AM.** These four hours hold 46% of revenue; shift staff hours from the afternoon and evening to the morning.
+2. **Review opening hours after 8 PM.** Six months of sales in that hour total \$2.9K across all three stores.
+3. **Promote large sizes.** They already lead the ranking, so make Large the suggested size at the till.
+4. **Trim or rotate the slowest products.** The bottom six together earn about \$7.4K in six months.
+5. **Run promotions chain-wide.** Stores and weekdays perform alike, so there is no weak store or weak day to target.
