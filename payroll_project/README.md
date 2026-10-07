@@ -19,14 +19,10 @@ An end-to-end payroll analytics project: raw payroll files are loaded into a SQL
   - [Employee Analysis](#employee-analysis)
   - [Recommendations](#recommendations)
 - [Data Quality Issues Solved](#data-quality-issues-solved)
-- [How to Run](#how-to-run)
-- [Repository Structure](#repository-structure)
 
 ## Problem Statement
 
-Payroll errors are rarely one big mistake. They build up from small mismatches: a casual loading that was not applied, a junior rate used after a birthday, a contract rate that fell behind the legal minimum when the minimum went up. Each one is hard to see in a payslip, and across several years they add up to a liability the business has to find, quantify and repay.
-
-This project answers three questions for an HR or finance team:
+The project answers three questions for an HR or finance team:
 
 1. **How much is owed?** Total underpayment across the workforce, and how it compares with what was paid above the minimum.
 2. **Where does it come from?** Which pay periods, employment types, contract types and job titles carry the gap.
@@ -67,21 +63,6 @@ The warehouse lives in a SQL Server database called `payroll` and is split into 
 | 1 | `LANDING` | Tables | Source files loaded as they arrive, with no changes |
 | 2 | `STAGING` | Views | Columns selected and renamed, business keys derived (for example `pay_rate_id` and `tax_rate_id`) |
 | 3 | `MARTS` | Views + date table | Star schema: surrogate keys, foreign keys to dimensions, pay period assignment |
-
-Two design choices are worth calling out:
-
-- **Surrogate keys are hashes.** `dim_employees` and `dim_contracts` build their primary key with `HASHBYTES('SHA1', ...)` over the business key and start date, so a new contract for the same employee gets its own key.
-- **Pay period is resolved in the warehouse, not in the report.** Every fact row joins to the employee's contract that was active on the transaction date, then picks the weekly, fortnightly or monthly pay period according to that contract's payment frequency.
-
-```mermaid
-flowchart LR
-    A[Payroll source files] --> B[LANDING<br>raw tables]
-    subgraph SQL Server: payroll database
-        B --> C[STAGING<br>cleaned views]
-        C --> D[MARTS<br>star schema]
-    end
-    D --> E[Power BI report]
-```
 
 ## Semantic Model
 
@@ -132,8 +113,6 @@ Overtime is found by matching each timesheet row to the roster on employee and d
   <img src="screenshots/payroll_remediation.png" width="850" alt="Payroll Remediation page">
 </p>
 
-Across 2021 to 2025 the business paid **$10.28M** against a legal minimum of **$5.43M**, about 1.9 times the floor. Underpayment still occurred in specific periods for specific people.
-
 - **$35.1K is owed to 14 of 100 employees.** All 14 are still active. One employee accounts for $10.6K (30%), and the top four for 67%.
 - **Casual staff carry 93% of it.** $32.7K of the underpayment sits with casual employees, against $2.1K for part-time and $347 for full-time.
 - **Weekly pay runs carry 73%.** $25.7K arose in weekly pay periods and $9.5K in monthly ones. Fortnightly periods show none.
@@ -176,21 +155,3 @@ Problems found while building the pipeline, and how each was handled:
 | Pay periods appeared in alphabetical order on chart axes | `pay_period_label` is text | Set *Sort by column* to `period_start_date` |
 | Junior employees' minimum entitlement was understated 100-fold | `dim_junior_pay_rates` already stores the multiplier as a fraction (0.368), and the `Mandatory Amount` measure divided it by 100 again | Removed the second division; two under-21 employees with underpayments surfaced and the total moved from $34.8K to $35.1K |
 | A cyclic reference blocked all queries from loading | A duplicated query (`dim_pay_period (2)`) referenced its original | Removed the duplicate and reloaded each table once |
-
-## How to Run
-
-1. Create the database and schemas, then import the source files into the `LANDING` schema.
-2. Run `sql/Payroll_Project.sql` to create the `STAGING` and `MARTS` views.
-3. In Power BI Desktop, connect to your server (database `payroll`), import the `MARTS` schema and refresh.
-
-**Tools:** SQL Server 2022 Express, SQL Server Management Studio, Power BI Desktop.
-
-## Repository Structure
-
-```
-payroll_project/
-├── README.md
-├── screenshots/             # Dashboard pages and model view
-└── sql/
-    └── Payroll_Project.sql  # Schemas, staging views, marts views
-```
