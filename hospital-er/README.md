@@ -1,116 +1,147 @@
-# Hospital Emergency Room Analysis — Power BI Dashboard
+# Hospital Emergency Room Analysis
 
-An interactive Power BI report analysing **9,216 emergency room (ER) visits** recorded between **April 2019 and October 2020**. It gives hospital management one place to monitor patient volume, waiting times, patient satisfaction and department referrals.
+A Power BI report on 9,216 emergency room visits recorded between April 2019 and October 2020. One CSV export is cleaned in Power Query and analysed with DAX to show how many patients arrive, how long they wait against a 30-minute target, how satisfied they are and where they go next.
 
-> **Tools:** Power BI Desktop, Power Query, DAX, data modelling
->
-> **Data:** `Hospital ER.csv`, one row per ER visit (arrival date and time, patient demographics, wait time, satisfaction score, admission flag, department referral)
+<p align="center">
+  <img src="screenshots/Consolidated_View.png" width="850" alt="Consolidated View page">
+</p>
 
-## 1. Problem Statement
+## Table of Contents
 
-The emergency department sees about 480 patients every month, but managers have no easy way to see how the department is performing over time. They need to answer:
+- [Problem Statement](#problem-statement)
+- [Data Source](#data-source)
+- [Architecture](#architecture)
+- [Semantic Model](#semantic-model)
+  - [Relationships](#relationships)
+  - [Measures](#measures)
+- [Business Insights](#business-insights)
+  - [Monthly View](#monthly-view)
+  - [Consolidated View](#consolidated-view)
+  - [Satisfaction Overview](#satisfaction-overview)
+  - [Recommendations](#recommendations)
 
-1.  **How many patients are we seeing?** How does patient volume change month to month?
-2.  **How long do patients wait?** What share of patients are seen within the **30-minute target**, and is the average wait improving?
-3.  **How satisfied are patients?** What is the average satisfaction score, and what influences it?
-4.  **Who are our patients?** What is the mix of gender, age group and race?
-5.  **When do patients arrive?** Which days of the week and hours of the day are busiest?
-6.  **Where do patients go next?** How many are admitted, and which departments receive the most referrals?
+## Problem Statement
 
-**Goal:** build a dashboard that tracks these KPIs month by month and supports decisions on staffing, patient flow and service quality.
+The project answers five questions for the emergency department's managers:
 
-## 2. Process
+1. **How many patients arrive?** How volume changes month to month.
+2. **How long do they wait?** What share is seen within the 30-minute target.
+3. **How satisfied are they?** The average score and what moves it.
+4. **When do they arrive?** Which days and hours are busiest.
+5. **Where do they go next?** How many are admitted and which departments receive referrals.
 
-### 2.1 Data preparation (Power Query)
+The report compares each month with the one before it, and marks every visit as **Within Target** (wait of 30 minutes or less) or **Target Missed**.
 
-- Imported the raw CSV file and set data types (date/time, whole numbers, true/false, text).
-- Renamed columns to readable names (e.g. `patient_waittime` to `Patient Waittime`).
-- Replaced gender codes with full labels: `M` to Male, `F` to Female, `NC` to Not Confirmed.
-- Combined first initial and last name into `Patient Full name`.
-- Split the arrival timestamp into a separate `Time` column for hour-of-day analysis.
+## Data Source
 
-### 2.2 Data model
+The data is one CSV file, `Hospital ER.csv`, with **9,216 rows**, one per visit, from **1 April 2019 to 30 October 2020**.
 
-| Table                | Purpose                                                                                                   |
-|----------------------|-----------------------------------------------------------------------------------------------------------|
-| `Hospital ER`        | Fact table, one row per ER visit                                                                          |
-| `Date Table`         | Calendar table built with `CALENDAR()` over the visit dates: year, month (short/full), day of week        |
-| `Measure Table`      | Holds all DAX measures                                                                                    |
-| `Measures Parameter` | Field parameter to switch the heatmap between Total Patients, Avg Wait Time and Avg Satisfaction Score |
+| Column | What it holds |
+|---|---|
+| `date` | Arrival date and time |
+| `patient_id` | One id per visit |
+| `patient_first_inital`, `patient_last_name` | Patient name |
+| `patient_gender`, `patient_age`, `patient_race` | Demographics |
+| `patient_waittime` | Minutes waited, from 10 to 60 |
+| `patient_sat_score` | Satisfaction score from 0 to 10; filled in for 2,517 visits (27%) |
+| `patient_admission_flag` | Whether the patient was admitted |
+| `department_referral` | Department referred to, or None |
 
-**Calculated columns** in `Hospital ER`:
+## Architecture
 
-| Column                   | Logic                                                              |
-|--------------------------|--------------------------------------------------------------------|
-| `Admission Status`       | Admitted / Not Admitted, from the admission flag                   |
-| `Age Group`              | 10-year bands (0-9, 10-19 … 70-79)                                 |
-| `Waittime Status`        | **Within Target** if wait is 30 minutes or less, otherwise **Target Missed** |
-| `Hour` and `Hour Group`  | Arrival hour grouped into 2-hour blocks for the heatmap           |
+All preparation happens inside Power BI. Each layer has one job.
 
-### 2.3 DAX measures
+| Layer | Tool | Purpose |
+|---|---|---|
+| 1 | CSV file | Flat source table, one row per visit |
+| 2 | Power Query | Set data types, rename columns, replace gender codes (M, F, NC) with full labels, build the patient's full name, split the arrival time from the timestamp |
+| 3 | Data model | Calculated columns on the visit table, a calendar table and a field parameter built in DAX |
+| 4 | Report | Three report pages |
 
-- **Core KPIs:** `Total Patients` (distinct count of Patient ID), `Avg Wait Time`, `Avg Satisfaction Score`, `Total Referred Patients` (patients with a department referral)
-- **Month-over-month comparison:** each KPI has a last-month version using `DATEADD(..., -1, MONTH)`, plus the difference and % growth vs last month
-- **Share of total:** `% of Total Patients` uses `ALL()` on Admission Status to calculate the admitted / not admitted split
-- **Dynamic titles and labels:** `HeatMap Title` changes with the field parameter; `Avg Wait Time Display` formats the wait as "35.3 Min"
+## Semantic Model
 
-### 2.4 Report design
+The model has one fact table, one calendar table, a field parameter and a `Measure Table` that holds all DAX measures.
 
-| Page                      | What it shows                                                                                                                                                                                            |
-|---------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Monthly View**          | KPI cards with last-month comparison, filtered by year and month slicers. Patient trend, wait-time target status, gender, race, age group, admission status, and a day × hour heatmap that can switch between patients, wait time and satisfaction |
-| **Consolidated View**     | The same layout across the full date range (date-range slicer), for an overall picture                                                                                                                  |
-| **Satisfaction Overview** | Wait time vs satisfaction by department (scatter), satisfaction by wait time and admission status (line), wait time and satisfaction by age group (combo chart), and a patient detail table          |
+| Table | Rows | What it holds |
+|---|---:|---|
+| `Hospital ER` | 9,216 | One row per visit, with the calculated columns below |
+| `Date Table` | 579 | Calendar built with `CALENDAR` over the visit dates: year, month and day of week |
+| `Measures Parameter` | 3 | Field parameter that switches the heatmap between Total Patients, Avg Wait Time and Avg Satisfaction Score |
 
-**Interactivity:** page navigator, bookmark navigator, year/month and date-range slicers, and a field parameter slicer for the heatmap.
+Calculated columns on `Hospital ER`:
 
-## 3. Key Insights
+| Column | Logic |
+|---|---|
+| `Patient Admin Date` | Date part of the arrival timestamp |
+| `Admission Status` | Admitted or Not Admitted, from the admission flag |
+| `Age Group` | Ten-year bands from 0-9 to 100+ |
+| `Waittime Status` | Within Target if the wait is 30 minutes or less, otherwise Target Missed |
+| `Hour`, `Hour Group` | Arrival hour, grouped into two-hour blocks for the heatmap |
 
-*Figures cover the full period, April 2019 – October 2020, unless stated otherwise.*
+### Relationships
 
-**Patient volume**
+| From | To | Type |
+|---|---|---|
+| `Hospital ER[Patient Admin Date]` | `Date Table[Date]` | Many-to-one |
 
-- The ER treated **9,216 patients** over 19 months, an average of **about 485 per month**. Volume is **stable**, ranging from **431 (February 2020)** to **530 (August 2020)**, with no clear upward or downward trend.
-- Arrivals are spread **evenly across the week**. Monday is the busiest day (1,377 patients) and Friday the quietest (1,260), a difference of less than 10%.
-- Arrivals are also spread **evenly across the day**: every hour receives between about 350 and 440 patients, including overnight. **The ER is as busy at midnight as at midday.**
+### Measures
 
-**Waiting time**
+| Measure | Logic |
+|---|---|
+| `Total Patients` | Distinct count of `Patient ID` |
+| `Avg Wait Time` | Average of `Patient Waittime` |
+| `Avg Satisfaction Score` | Average of `Patient Sat Score`; visits with no score are left out |
+| `Total Referred Patients` | `Total Patients` where the referral is not None |
+| `Total Patient LM`, `Avg Wait Time LM`, `Avg Satisfaction Score LM` | The same measures shifted back one month with `DATEADD(-1, MONTH)` |
+| `Δ Patient vs LM`, `% Growth Patient` (and the same for wait time and satisfaction) | Difference and percentage change against last month |
+| `% of Total Patients` | Share of patients by admission status, using `ALL` on `Admission Status` for the denominator |
+| `HeatMap Title` | Title text that follows the measure chosen in the field parameter |
 
-- The average wait is **35.3 minutes**, above the **30-minute target**.
-- **59% of patients miss the target**; only 41% are seen within 30 minutes.
-- Waits range from 10 to 60 minutes, and the average stays between **34 and 37 minutes in every month, on every weekday and in every hour block**. The delay is a **constant, system-wide issue**, not tied to a particular peak time.
+## Business Insights
 
-**Patient satisfaction**
+### Monthly View
 
-- The average satisfaction score is **5.0 out of 10**, which is only moderate.
-- Only **27% of patients (2,517) gave a score**, so this result is based on a small sample.
-- Satisfaction is almost the same for patients seen within target (5.04) and those who missed it (4.96). **Wait time on its own does not explain satisfaction**; other parts of the experience matter.
-- By age group, satisfaction is lowest for patients aged **70-79 (4.58)** and **10-19 (4.76)**.
-- By referral department, **Renal (4.57)** and **Orthopedics (4.86)** score lowest, and **Gastroenterology (5.80)** scores highest.
+<p align="center">
+  <img src="screenshots/monthly-view.png" width="850" alt="Monthly View page">
+</p>
 
-**Patient profile and flow**
+This page shows one month at a time, picked with the year and month slicers, and compares each KPI with the month before.
 
-- The gender split is balanced: **51% male, 49% female**. Age groups from 0-9 to 70-79 are each about 12-13% of patients.
-- The largest groups by race are **White (2,571)**, **African American (1,951)** and **Two or More Races (1,557)**. **1,030 patients (11%) declined to identify.**
-- **50% of patients are admitted** to hospital.
-- **41% (3,816) are referred** to another department. **General Practice (1,840)** and **Orthopedics (995)** receive the most referrals; together they account for about three-quarters of all referrals.
+- **Volume is stable at about 485 patients a month.** It ranges from 431 (February 2020) to 530 (August 2020) with no upward or downward trend.
+- **The average wait never leaves a narrow band.** Monthly averages run from 34.1 to 36.7 minutes, above the 30-minute target in all 19 months.
+- **Monthly satisfaction moves between 4.6 and 5.3** out of 10, with no lasting direction.
 
-## 4. Recommendations
+### Consolidated View
 
-| #   | Recommendation                                                                                                                                                                                    | Based on                                        |
-|-----|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
-| 1   | **Staff evenly around the clock.** Arrivals do not drop at night or on weekends, so night and weekend rosters should match daytime levels rather than run on reduced teams.                        | Day × hour heatmap, patients by weekday         |
-| 2   | **Target the 30-minute wait with process changes, not just extra staff at peak times.** Because waits are high at all hours, review triage, registration and handover steps to find the constant bottleneck. | Wait-time status, wait time by hour and weekday |
-| 3   | **Set a measurable goal**, such as raising the share of patients seen within 30 minutes from 41% to 60%, and track it monthly on the Monthly View page.                                        | Wait-time status donut, MoM KPI cards           |
-| 4   | **Increase the satisfaction survey response rate** (currently 27%) with a short SMS or tablet survey at discharge, so decisions are based on a representative sample.                           | Satisfaction score coverage                     |
-| 5   | **Improve the experience for elderly (70-79) and teenage (10-19) patients**, for example with a dedicated escort or communication protocol, as these groups report the lowest satisfaction.        | Wait time and satisfaction by age group         |
-| 6   | **Create fast-track pathways to General Practice and Orthopedics**, which receive about three-quarters of referrals, to free up ER beds and staff sooner.                                          | Department referral scatter                     |
-| 7   | **Review the Renal and Orthopedics referral experience**, which has the lowest satisfaction among departments.                                                                                    | Satisfaction by department                      |
-| 8   | **Improve demographic data capture.** 11% of patients declined to identify their race; clearer explanations at registration would support equity reporting.                                      | Patients by race                                |
+<p align="center">
+  <img src="screenshots/Consolidated_View.png" width="850" alt="Consolidated View page">
+</p>
 
-## 5. Limitations
+Showing the same layout over the full period.
 
-- The dataset has **no clinical information** (diagnosis, triage level, severity), so wait times cannot be compared against urgency.
-- Satisfaction scores are available for **only 27% of visits**, so satisfaction results may not represent all patients.
-- Each visit has a single wait-time figure; the **total length of stay** in the ER is not recorded.
-- The data covers **19 months** (April 2019 – October 2020), which includes the start of the COVID-19 period. No COVID-related change is visible in patient volume.
+- **59% of patients miss the wait target.** The average wait is 35.3 minutes and only 41% are seen within 30 minutes.
+- **The wait is the same at every hour and on every day.** Hourly averages stay between 34.0 and 37.3 minutes, and weekday averages between 34.9 and 35.7.
+- **Arrivals are spread evenly, including overnight.** Each hour of the day receives between 344 and 436 patients; the busiest hour is 11 PM. Monday is the busiest day (1,377) and Friday the quietest (1,260).
+- **Half of patients are admitted** (50%).
+- **41% are referred to another department** (3,816 patients). General Practice (1,840) and Orthopedics (995) take 74% of referrals.
+- **Patients are split evenly by gender and age.** 51% male and 49% female; each ten-year age band from 0-9 to 70-79 holds 11% to 13% of patients.
+- **11% declined to state their race** (1,030 patients). The largest groups are White (2,571), African American (1,951) and Two or More Races (1,557).
+
+### Satisfaction Overview
+
+<p align="center">
+  <img src="screenshots/Satisfation_Overview.png" width="850" alt="Satisfaction Overview page">
+</p>
+
+- **The average score is 5.0 out of 10, from 27% of visits.** Only 2,517 of 9,216 visits have a score.
+- **Wait time does not explain satisfaction.** Patients seen within target score 5.04 and those who missed it 4.96; the correlation between wait and score is −0.02.
+- **Two age groups score lowest:** 70-79 (4.58) and 10-19 (4.76). The highest is 20-29 (5.25).
+- **By referral department, Renal scores lowest (4.57) and Gastroenterology highest (5.80).** Renal has only 86 patients in total, so its score rests on few responses.
+
+### Recommendations
+
+1. **Look for the cause of the wait in the process, not in peak-hour staffing.** The wait is 35 minutes at every hour and on every day, so the delay sits in a step every patient goes through, such as triage or registration.
+2. **Keep night and weekend rosters at daytime levels.** Arrivals do not fall overnight or at weekends.
+3. **Set a target for the share seen within 30 minutes** (41% today) and track it on the Monthly View page.
+4. **Raise the survey response rate before acting on satisfaction scores.** Three in four visits have no score.
+5. **Give General Practice and Orthopedics referrals a faster path.** They receive 74% of all referrals.
