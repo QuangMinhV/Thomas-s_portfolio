@@ -58,6 +58,10 @@ Segment name (e.g. Champions)
 
 The view `New_Orders` uses `EXCEPT` to drop every order that appears in `Return_Full`, so returned sales are not counted as revenue. This removes 1,172 orders (3,050 rows).
 
+Result of `SELECT * FROM New_Orders` (48,240 rows):
+
+![New_Orders view result](screenshots/01_new_orders_view.png)
+
 ### 3. Method 1: `NTILE` scoring
 
 A chain of three CTEs, grouped by `Customer_Name` (795 customers):
@@ -83,11 +87,9 @@ Approximate score boundaries on this dataset (159 customers per group):
 
 The query returns one row per customer with the three values, the three scores, the RFM code and the segment:
 
-![Method 1 result in SSMS](screenshots/rfm_ntile_segments.png)
+![Method 1 result](screenshots/02_method1_ntile_result.png)
 
-Customers and revenue per segment, from SQL Server 2022:
-
-![Segment summary in SSMS](screenshots/segment_summary.png)
+Grouping that result by segment gives the following customers and revenue per segment (SQL Server 2022):
 
 | Segment | Customers | Total sales |
 |---|---|---|
@@ -123,7 +125,7 @@ Steps:
 
 The thresholds and the number of customers per RFM code:
 
-![Method 2 result in SSMS](screenshots/percentile_method.png)
+![Method 2 result](screenshots/03_method2_percentile_result.png)
 
 All three metrics are ordered ascending here, so low values score 1. The best customer in this method is `115`, not `555`.
 
