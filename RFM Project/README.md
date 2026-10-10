@@ -81,23 +81,31 @@ Approximate score boundaries on this dataset (159 customers per group):
 | 4 | 5 – 13 | 32 – 35 | 15,445 – 18,631 |
 | 5 | 0 – 5 | 35 – 46 | 18,643 – 40,488 |
 
-Resulting segments (approximate; counts can shift by a few customers because `NTILE` breaks ties arbitrarily):
+The query returns one row per customer with the three values, the three scores, the RFM code and the segment:
+
+![Method 1 result in SSMS](screenshots/rfm_ntile_segments.png)
+
+Customers and revenue per segment, from SQL Server 2022:
+
+![Segment summary in SSMS](screenshots/segment_summary.png)
 
 | Segment | Customers | Total sales |
 |---|---|---|
-| At Risk | 133 | 2,276,108 |
-| Potential Loyalist | 114 | 1,439,875 |
-| Hibernating customers | 102 | 1,219,389 |
-| Champions | 79 | 1,701,140 |
-| New Customers | 75 | 704,133 |
-| Loyal | 72 | 1,342,589 |
-| Promising | 64 | 998,098 |
-| Lost customers | 53 | 499,596 |
-| Need Attention | 40 | 689,826 |
-| Cannot Lose Them | 36 | 679,478 |
-| About To Sleep | 34 | 341,504 |
+| At Risk | 129 | 2,214,043 |
+| Potential Loyalist | 114 | 1,429,247 |
+| Hibernating customers | 107 | 1,291,807 |
+| New Customers | 79 | 753,982 |
+| Champions | 78 | 1,677,078 |
+| Loyal | 74 | 1,381,021 |
+| Promising | 57 | 915,188 |
+| Lost customers | 52 | 488,365 |
+| Need Attention | 42 | 730,314 |
+| About To Sleep | 37 | 368,261 |
+| Cannot Lose Them | 35 | 662,345 |
 
 At Risk is both the largest segment and the one holding the most revenue, which makes it the first priority for win-back campaigns.
+
+The counts add up to 804 rather than 795 because three codes (`231`, `241`, `251`) appear under two segments in the lookup, so 9 customers are counted twice. `NTILE` also breaks ties arbitrarily, so counts can shift by a few customers between runs.
 
 ### 4. Method 2: percentile thresholds
 
@@ -112,6 +120,10 @@ Steps:
 1. `PERCENTILE_DISC(0.2 … 0.8)` finds the four cut-off values for each metric; results are saved to `RFM_RawData`.
 2. The twelve cut-offs are loaded into variables.
 3. `CASE WHEN` compares each customer in `RFM_RawData` with the cut-offs to assign a score, then customers are counted per RFM code.
+
+The thresholds and the number of customers per RFM code:
+
+![Method 2 result in SSMS](screenshots/percentile_method.png)
 
 All three metrics are ordered ascending here, so low values score 1. The best customer in this method is `115`, not `555`.
 
