@@ -18,4 +18,4 @@ Hi, I'm Thomas. This repository contains my personal data analytics projects. In
 | [Payroll Remediation Analytics](payroll_project/) | SQL Server data warehouse and Power BI report that finds employees paid below their minimum entitlement across 45,607 timesheet rows. |
 | [RFM Customer Segmentation](RFM%20Project/) | Customer segmentation of 51,290 retail order lines in SQL Server using RFM analysis, comparing `NTILE` and percentile-threshold scoring. |
 
-Each project folder has a README, the Power BI file (`.pbix`) and dashboard screenshots.
+Each project folder has a README and screenshots. The Power BI projects include the report file (`.pbix`); the SQL projects include the `.sql` scripts.

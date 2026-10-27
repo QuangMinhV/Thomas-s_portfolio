@@ -50,7 +50,7 @@ All preparation happens inside Power BI. Each layer has one job.
 
 | Layer | Tool | Purpose |
 |---|---|---|
-| 1 | CSV file | Flat source table, one row per transaction line |
+| 1 | Excel workbook | `Coffee Shop Sales.xlsx`: flat source table, one row per transaction line |
 | 2 | Power Query | Set data types, split the flat table into fact and dimension tables, remove duplicates, add surrogate keys (`category_id`, `type_id`) |
 | 3 | Data model | Star schema with a snowflaked product hierarchy, a calendar table and a time table built in DAX |
 | 4 | Report | Three report pages and two tooltip pages |
