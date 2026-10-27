@@ -16,6 +16,8 @@ The code is then used to decide who to reward, who to win back, and who is not w
 
 ## Dataset
 
+The data is based on the **Global Superstore** sample dataset, with order dates running from 2020 to 2023. Sales values are in US dollars.
+
 | File | Rows | Description |
 |---|---|---|
 | `Orders_Full.csv` | 51,290 | One row per product line in an order, 1 Jan 2020 to 31 Dec 2023, 7 markets |
@@ -91,7 +93,7 @@ The query returns one row per customer with the three values, the three scores, 
 
 Grouping that result by segment gives the following customers and revenue per segment (SQL Server 2022):
 
-| Segment | Customers | Total sales |
+| Segment | Customers | Total sales (USD) |
 |---|---|---|
 | At Risk | 129 | 2,214,043 |
 | Potential Loyalist | 114 | 1,429,247 |

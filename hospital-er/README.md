@@ -34,7 +34,7 @@ The report compares each month with the one before it, and marks every visit as 
 
 ## Data Source
 
-The data is one CSV file, `Hospital ER.csv`, with **9,216 rows**, one per visit, from **1 April 2019 to 30 October 2020**.
+The data is a public sample dataset: one CSV file, `Hospital ER.csv`, with **9,216 rows**, one per visit, from **1 April 2019 to 30 October 2020**.
 
 | Column | What it holds |
 |---|---|
