@@ -120,8 +120,8 @@ This page shows one month at a time, picked with the year and month slicers, and
 Showing the same layout over the full period.
 
 - **59% of patients miss the wait target.** The average wait is 35.3 minutes and only 41% are seen within 30 minutes.
-- **The wait is the same at every hour and on every day.** Hourly averages stay between 34.0 and 37.3 minutes, and weekday averages between 34.9 and 35.7.
-- **Arrivals are spread evenly, including overnight.** Each hour of the day receives between 344 and 436 patients; the busiest hour is 11 PM. Monday is the busiest day (1,377) and Friday the quietest (1,260).
+- **The wait is the same at every hour and on every day.** Hourly averages stay between 33.9 and 37.2 minutes, and weekday averages between 34.9 and 35.7.
+- **Arrivals are spread evenly, including overnight.** Each hour of the day receives between 349 and 436 patients; the busiest hour is 11 PM. Monday is the busiest day (1,377) and Friday the quietest (1,260).
 - **Half of patients are admitted** (50%).
 - **41% are referred to another department** (3,816 patients). General Practice (1,840) and Orthopedics (995) take 74% of referrals.
 - **Patients are split evenly by gender and age.** 51% male and 49% female; each ten-year age band from 0-9 to 70-79 holds 11% to 13% of patients.
