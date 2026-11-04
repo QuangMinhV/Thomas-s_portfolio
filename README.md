@@ -15,6 +15,7 @@ Hi, I'm Thomas. This repository contains my personal data analytics projects. In
 |---|---|
 | [Hospital ER Analysis](hospital-er/) | Analysis of 9,216 emergency room visits: patient volume, waiting time and patient satisfaction. |
 | [Coffee Sales Analysis](coffee-sales/) | Sales analysis for a coffee chain with three stores: sales trends, busiest hours and best-selling products. |
+| [Pizza Sales Analysis](pizza-sales/) | One year of orders from a pizza restaurant: peak hours, holiday spikes, best and worst pizzas, ingredient usage and the price-volume link. |
 | [Payroll Remediation Analytics](payroll_project/) | SQL Server data warehouse and Power BI report that finds employees paid below their minimum entitlement across 45,607 timesheet rows. |
 | [RFM Customer Segmentation](RFM%20Project/) | Customer segmentation of 51,290 retail order lines in SQL Server using RFM analysis, comparing `NTILE` and percentile-threshold scoring. |
 
