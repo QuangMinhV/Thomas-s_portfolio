@@ -1,0 +1,16 @@
+{
+  "title": "Payroll Remediation Analytics",
+  "description": "Three-layer SQL Server warehouse and Power BI star schema over 45,607 timesheet rows; found $35.1K owed to 14 of 100 employees.",
+  "tools": [
+    "SQL Server",
+    "Power BI",
+    "DAX",
+    "Star Schema"
+  ],
+  "categories": [
+    "SQL",
+    "Power BI"
+  ],
+  "date": "10/2026",
+  "cover": "cover.jpg"
+}

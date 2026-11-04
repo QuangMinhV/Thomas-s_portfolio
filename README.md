@@ -20,3 +20,28 @@ Hi, I'm Thomas. This repository contains my personal data analytics projects. In
 | [RFM Customer Segmentation](RFM%20Project/) | Customer segmentation of 51,290 retail order lines in SQL Server using RFM analysis, comparing `NTILE` and percentile-threshold scoring. |
 
 Each project folder has a README and screenshots. The Power BI projects include the report file (`.pbix`); the SQL projects include the `.sql` scripts.
+
+## Adding a project to the website
+
+The Projects section of [thomas-vu-portfolio.vercel.app](https://thomas-vu-portfolio.vercel.app) is built from this repository. Any project folder that contains a `project.json` appears on the site, and every push to `main` rebuilds the site within a couple of minutes.
+
+To add a project, put a `project.json` and a cover image in its folder:
+
+```json
+{
+  "title": "Pizza Sales Analysis",
+  "description": "One or two sentences on the data and the main finding.",
+  "tools": ["Power BI", "Power Query", "DAX"],
+  "categories": ["Power BI"],
+  "date": "09/2026",
+  "cover": "cover.jpg"
+}
+```
+
+| Field | What it does |
+|---|---|
+| `title`, `description` | Card heading and text |
+| `tools` | Small tags under the description |
+| `categories` | Badge on the image and the filter buttons (for example `Power BI`, `SQL`, `Python`) |
+| `date` | Month and year, `MM/YYYY`; cards are sorted newest first |
+| `cover` | Image path inside the folder; a 16:9 image about 800 px wide loads fastest |

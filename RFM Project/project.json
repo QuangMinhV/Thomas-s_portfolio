@@ -1,0 +1,14 @@
+{
+  "title": "RFM Customer Segmentation",
+  "description": "Scored customers from 51,290 order lines with CTEs and window functions; At Risk was the largest segment at $2.2M in sales.",
+  "tools": [
+    "SQL Server",
+    "T-SQL",
+    "Window Functions"
+  ],
+  "categories": [
+    "SQL"
+  ],
+  "date": "10/2026",
+  "cover": "cover.svg"
+}

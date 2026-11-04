@@ -1,0 +1,15 @@
+{
+  "title": "Pizza Sales Analysis",
+  "description": "48,620 order lines from 2015: peak hours, holiday spikes, best and worst pizzas, ingredient usage and an 18-check data validation log.",
+  "tools": [
+    "Power BI",
+    "Power Query",
+    "DAX",
+    "Field Parameters"
+  ],
+  "categories": [
+    "Power BI"
+  ],
+  "date": "09/2026",
+  "cover": "cover.jpg"
+}

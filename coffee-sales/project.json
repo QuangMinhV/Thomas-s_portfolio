@@ -1,0 +1,14 @@
+{
+  "title": "Coffee Sales Analysis",
+  "description": "~149K transactions reshaped into a star schema; 7–10 AM held 46% of revenue, so staff should shift to mornings.",
+  "tools": [
+    "Power BI",
+    "DAX",
+    "Star Schema"
+  ],
+  "categories": [
+    "Power BI"
+  ],
+  "date": "09/2026",
+  "cover": "cover.jpg"
+}

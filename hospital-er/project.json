@@ -1,0 +1,14 @@
+{
+  "title": "Hospital ER Analysis",
+  "description": "9,216 emergency visits; found 59% of patients missed the 30-minute wait target at every hour of the day.",
+  "tools": [
+    "Power BI",
+    "Power Query",
+    "DAX"
+  ],
+  "categories": [
+    "Power BI"
+  ],
+  "date": "09/2026",
+  "cover": "cover.jpg"
+}

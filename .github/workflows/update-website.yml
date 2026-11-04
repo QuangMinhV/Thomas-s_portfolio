@@ -1,0 +1,24 @@
+# Rebuilds thomas-vu-portfolio.vercel.app whenever this repo changes on main,
+# so new or edited projects (any folder with a project.json) appear on the site.
+# Needs one repository secret: VERCEL_DEPLOY_HOOK (a Vercel Deploy Hook URL).
+name: Update portfolio website
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel rebuild
+        env:
+          HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$HOOK" ]; then
+            echo "::warning::VERCEL_DEPLOY_HOOK secret is not set, so the website was not rebuilt."
+            exit 0
+          fi
+          curl -fsS -X POST "$HOOK" > /dev/null
+          echo "Website rebuild requested."
