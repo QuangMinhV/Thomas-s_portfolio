@@ -2,7 +2,7 @@
 
 A Power BI report on one year of orders (1 January to 31 December 2015) from a pizza company, built to a Power BI assessment brief. One flat CSV export is split into a star schema with an ingredient bridge table in Power Query and analysed with DAX to show how sales move through the year, when customers order, which pizzas carry the menu and how price relates to volume.
 
-The requirements, KPI definitions and the data validation log are in a Word document: **[Download Requirements & Data Validation (.docx)](https://github.com/QuangMinhV/thomas-s_portfolio/raw/main/pizza-sales/Pizza_Sales_Requirements_and_Data_Validation.docx)**.
+The requirements, KPI definitions and the data validation log are in a Word document: **[Download Requirements & Data Validation (.docx)](https://github.com/QuangMinhV/Thomas-s_portfolio/raw/main/pizza-sales/Pizza_Sales_Requirements_and_Data_Validation.docx)**.
 
 <p align="center">
   <img src="screenshots/Overview.png" width="850" alt="Overview page">
@@ -39,7 +39,7 @@ The report also flags each order as **Single-item** or **Multi-item** and measur
 
 ## Documentation
 
-**[Download Pizza_Sales_Requirements_and_Data_Validation.docx](https://github.com/QuangMinhV/thomas-s_portfolio/raw/main/pizza-sales/Pizza_Sales_Requirements_and_Data_Validation.docx)** sets out the specification behind the report and the checks run on the data:
+**[Download Pizza_Sales_Requirements_and_Data_Validation.docx](https://github.com/QuangMinhV/Thomas-s_portfolio/raw/main/pizza-sales/Pizza_Sales_Requirements_and_Data_Validation.docx)** sets out the specification behind the report and the checks run on the data:
 
 | Section | What it covers |
 |---|---|
